@@ -1,0 +1,251 @@
+{% extends 'plantilla/base.html' %}
+
+{% block title %}Editar {{ entity_name }} - {{ item.name or item.nombre or item.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4 mb-2">
+                        <i class="bi bi-pencil"></i> Editar {{ entity_name }}
+                    </h1>
+                    <p class="text-muted lead">Actualiza la información de: {{ item.name or item.nombre or item.titulo
+                        }}</p>
+                </div>
+                <a href="/{{ entity_route }}/{{ item.id }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row">
+        <!-- Form Column -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <form method="POST" action="/{{ entity_route }}/edit{{ entity_name }}/{{ item.id }}"
+                        enctype="multipart/form-data" id="editForm">
+
+                        <!-- Name Field -->
+                        <div class="mb-4">
+                            <label for="name" class="form-label">
+                                <i class="bi bi-tag"></i> Nombre *
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="name" name="name" required
+                                value="{{ item.name or item.nombre or item.titulo }}" placeholder="Ingresa el nombre">
+                            <div class="form-text">Campo obligatorio</div>
+                        </div>
+
+                        <!-- Alias/Subtitle Field (Optional) -->
+                        <div class="mb-4">
+                            <label for="alias" class="form-label">
+                                <i class="bi bi-person-badge"></i> Alias / Subtítulo
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="alias" name="alias"
+                                value="{{ item.alias or '' }}" placeholder="Ingresa un alias o subtítulo (opcional)">
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-4">
+                            <label for="descripcion" class="form-label">
+                                <i class="bi bi-file-text"></i> Descripción
+                            </label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="4"
+                                placeholder="Describe el {{ entity_name|lower }}...">{{ item.descripcion or item.details or '' }}</textarea>
+                            <div class="form-text">
+                                <span id="charCount">{{ (item.descripcion or item.details or '')|length }}</span>
+                                caracteres
+                            </div>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="mb-4">
+                            <label for="img" class="form-label">
+                                <i class="bi bi-image"></i> Imagen
+                            </label>
+                            <input type="file" class="form-control" id="img" name="img" accept="image/*"
+                                onchange="previewImage(event)">
+                            <div class="form-text">Deja vacío para mantener la imagen actual</div>
+                        </div>
+
+                        <!-- Status Field (if applicable) -->
+                        {% if item.alive is defined %}
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-toggle-on"></i> Estado
+                            </label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="alive" name="alive" {% if item.alive
+                                    %}checked{% endif %}>
+                                <label class="form-check-label" for="alive">
+                                    Activo
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Additional Fields Block -->
+                        {% block additional_fields %}
+                        <!-- Override this block to add entity-specific fields -->
+                        {% endblock %}
+
+                        <hr class="my-4">
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-warning btn-lg flex-grow-1">
+                                <i class="bi bi-check-circle"></i> Guardar Cambios
+                            </button>
+                            <a href="/{{ entity_route }}/{{ item.id }}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Column -->
+        <div class="col-lg-4">
+            <!-- Current Image -->
+            {% if item.img %}
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-image"></i> Imagen Actual
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <img src="{{ item.img }}" alt="{{ item.name or item.nombre or item.titulo }}" class="img-fluid"
+                        id="currentImage">
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- New Image Preview -->
+            <div id="imagePreview" class="card border-0 shadow-lg" style="display: none;">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eye"></i> Nueva Imagen
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <img id="preview" src="" alt="Preview" class="img-fluid">
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card border-0 shadow-sm" style="background-color: rgba(255, 193, 7, 0.1);">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightbulb"></i> Información
+                    </h5>
+                    <ul class="mb-0 small">
+                        <li>Los campos marcados con * son obligatorios</li>
+                        <li>Si no subes una nueva imagen, se mantendrá la actual</li>
+                        <li>Los cambios se guardarán inmediatamente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Character counter for description
+    const descripcionField = document.getElementById('descripcion');
+    const charCount = document.getElementById('charCount');
+
+    if (descripcionField && charCount) {
+        descripcionField.addEventListener('input', function () {
+            charCount.textContent = this.value.length;
+        });
+    }
+
+    // Image preview
+    function previewImage(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('imagePreview');
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    }
+
+    // Form validation
+    document.getElementById('editForm').addEventListener('submit', function (e) {
+        const nameField = document.getElementById('name');
+        if (!nameField.value.trim()) {
+            e.preventDefault();
+            alert('El nombre es obligatorio');
+            nameField.focus();
+        }
+    });
+
+    // Unsaved changes warning
+    let formChanged = false;
+    const form = document.getElementById('editForm');
+    const formInputs = form.querySelectorAll('input, textarea, select');
+
+    formInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            formChanged = true;
+        });
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    form.addEventListener('submit', () => {
+        formChanged = false;
+    });
+</script>
+
+<style>
+    .form-control:focus,
+    .form-check-input:focus {
+        border-color: var(--color-warning);
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--color-text-main);
+    }
+
+    #imagePreview {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

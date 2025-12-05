@@ -1,0 +1,119 @@
+div class="col">
+    <div class="card h-100 hover-shadow transition-all">
+        <!-- Card Image (if applicable) -->
+        {% if item.img %}
+        <img src="{{ item.img }}" class="card-img-top" alt="{{ item.name or item.nombre or item.titulo }}">
+        {% else %}
+        <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center"
+            style="height: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <i class="bi bi-{{ icon_name }} display-1 text-white opacity-50"></i>
+        </div>
+        {% endif %}
+
+        <!-- Card Body -->
+        <div class="card-body d-flex flex-column">
+            <!-- Title -->
+            <h5 class="card-title">
+                {{ item.name or item.nombre or item.titulo or 'Sin título' }}
+            </h5>
+
+            <!-- Subtitle (if applicable) -->
+            {% if item.alias or item.descripcion %}
+            <h6 class="card-subtitle mb-2 text-muted">
+                {{ item.alias or item.descripcion[:50] }}
+            </h6>
+            {% endif %}
+
+            <!-- Description or Details -->
+            <p class="card-text flex-grow-1">
+                {% if item.descripcion %}
+                {{ item.descripcion[:100] }}{% if item.descripcion|length > 100 %}...{% endif %}
+                {% elif item.details %}
+                {{ item.details[:100] }}{% if item.details|length > 100 %}...{% endif %}
+                {% else %}
+                <span class="text-muted">Sin descripción disponible</span>
+                {% endif %}
+            </p>
+
+            <!-- Status Badge (if applicable) -->
+            {% if item.alive is defined %}
+            <div class="mb-3">
+                {% if item.alive %}
+                <span class="badge bg-success">
+                    <i class="bi bi-check-circle"></i> Activo
+                </span>
+                {% else %}
+                <span class="badge bg-danger">
+                    <i class="bi bi-x-circle"></i> Inactivo
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mt-auto">
+                <a href="/{{ entity_route }}/{{ item.id }}" class="btn btn-outline-primary flex-grow-1">
+                    <i class="bi bi-eye"></i> Ver
+                </a>
+                <a href="/{{ entity_route }}/edit{{ entity_name }}/{{ item.id }}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button" class="btn btn-outline-danger"
+                    onclick="confirmDelete({{ item.id }}, '{{ item.name or item.nombre or item.titulo }}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Card Footer (optional - for additional info) -->
+        {% if item.created_at or item.updated_at %}
+        <div class="card-footer text-muted small">
+            <i class="bi bi-clock"></i>
+            {% if item.updated_at %}
+            Actualizado: {{ item.updated_at }}
+            {% elif item.created_at %}
+            Creado: {{ item.created_at }}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .card {
+        border: 1px solid var(--color-card-border);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 255, 255, 0.2);
+    }
+
+    .card-img-top {
+        height: 250px;
+        object-fit: cover;
+        border-bottom: 2px solid var(--color-card-border);
+    }
+</style>
+
+<script>
+    function confirmDelete(id, name) {
+        if (confirm(`¿Estás seguro de que deseas eliminar "${name}"?`)) {
+            fetch(`/{{ entity_route }}/${id}`, {
+                method: 'DELETE',
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Error al eliminar el elemento');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el elemento');
+                });
+        }
+    }
+</script>

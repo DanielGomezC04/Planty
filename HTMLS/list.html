@@ -1,0 +1,87 @@
+% extends 'plantilla/base.html' %}
+
+{% block title %}Lista de {{ entity_name_plural }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4 mb-2">
+                        <i class="bi bi-{{ icon_name }}"></i> {{ entity_name_plural }}
+                    </h1>
+                    <p class="text-muted lead">Gestiona todos los {{ entity_name_plural|lower }} del sistema</p>
+                </div>
+                <div>
+                    <a href="/{{ entity_route }}/new{{ entity_name }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle"></i> Crear {{ entity_name }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section (Optional) -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="searchInput" class="form-control"
+                    placeholder="Buscar {{ entity_name_plural|lower }}...">
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="badge bg-primary fs-6">
+                Total: <span id="totalCount">{{ items|length }}</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Items Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="itemsGrid">
+        {% if items %}
+        {% for item in items %}
+        {% include 'plantilla/card.html' %}
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-info-circle display-1 mb-3"></i>
+                <h3>No hay {{ entity_name_plural|lower }} disponibles</h3>
+                <p class="mb-4">Comienza creando tu primer {{ entity_name|lower }}</p>
+                <a href="/{{ entity_route }}/new{{ entity_name }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear {{ entity_name }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple search functionality
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const cards = document.querySelectorAll('#itemsGrid .col');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        document.getElementById('totalCount').textContent = visibleCount;
+    });
+</script>
+{% endblock %}

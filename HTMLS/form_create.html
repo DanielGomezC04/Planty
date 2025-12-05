@@ -1,0 +1,184 @@
+{% extends 'plantilla/base.html' %}
+
+{% block title %}{{ item.name or item.nombre or item.titulo }} - Detalles{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="/{{ entity_route }}/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Image Column -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-lg sticky-top" style="top: 20px;">
+                {% if item.img %}
+                <img src="{{ item.img }}" class="card-img-top rounded"
+                    alt="{{ item.name or item.nombre or item.titulo }}" style="max-height: 600px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top rounded d-flex align-items-center justify-content-center"
+                    style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="bi bi-{{ icon_name }} display-1 text-white opacity-75"></i>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/{{ entity_route }}/edit{{ entity_name }}/{{ item.id }}"
+                            class="btn btn-warning btn-lg">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <button type="button" class="btn btn-danger btn-lg" onclick="confirmDelete()">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Column -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-4">
+                    <!-- Title and Status -->
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="display-4 mb-2">
+                                {{ item.name or item.nombre or item.titulo }}
+                            </h1>
+                            {% if item.alias %}
+                            <h3 class="text-muted">{{ item.alias }}</h3>
+                            {% endif %}
+                        </div>
+                        {% if item.alive is defined %}
+                        <div>
+                            {% if item.alive %}
+                            <span class="badge bg-success fs-5">
+                                <i class="bi bi-check-circle"></i> Activo
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger fs-5">
+                                <i class="bi bi-x-circle"></i> Inactivo
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Details Grid -->
+                    <div class="row g-4">
+                        <!-- ID -->
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="text-muted small mb-1">
+                                    <i class="bi bi-hash"></i> ID
+                                </label>
+                                <p class="fs-5 mb-0">{{ item.id }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Add more fields as needed -->
+                        {% for key, value in item.items() %}
+                        {% if key not in ['id', 'name', 'nombre', 'titulo', 'alias', 'img', 'alive'] %}
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="text-muted small mb-1">
+                                    <i class="bi bi-info-circle"></i> {{ key|title }}
+                                </label>
+                                <p class="fs-5 mb-0">{{ value or 'N/A' }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Description Section -->
+                    {% if item.descripcion or item.details %}
+                    <hr class="my-4">
+                    <div class="description-section">
+                        <h4 class="mb-3">
+                            <i class="bi bi-file-text"></i> Descripción
+                        </h4>
+                        <p class="lead">{{ item.descripcion or item.details }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Related Items Section (if applicable) -->
+                    {% block related_items %}
+                    <!-- Override this block to show related items -->
+                    {% endblock %}
+
+                    <!-- Metadata -->
+                    <hr class="my-4">
+                    <div class="metadata text-muted small">
+                        {% if item.created_at %}
+                        <p class="mb-1">
+                            <i class="bi bi-calendar-plus"></i>
+                            Creado: {{ item.created_at }}
+                        </p>
+                        {% endif %}
+                        {% if item.updated_at %}
+                        <p class="mb-0">
+                            <i class="bi bi-calendar-check"></i>
+                            Última actualización: {{ item.updated_at }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmDelete() {
+        const itemName = '{{ item.name or item.nombre or item.titulo }}';
+        if (confirm(`¿Estás seguro de que deseas eliminar "${itemName}"?`)) {
+            fetch('/{{ entity_route }}/{{ item.id }}', {
+                method: 'DELETE',
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/{{ entity_route }}/';
+                    } else {
+                        alert('Error al eliminar el elemento');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el elemento');
+                });
+        }
+    }
+</script>
+
+<style>
+    .detail-item {
+        padding: 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--color-primary);
+        transition: all 0.3s ease;
+    }
+
+    .detail-item:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        transform: translateX(5px);
+    }
+
+    .description-section {
+        padding: 1.5rem;
+        background-color: rgba(0, 255, 255, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}
